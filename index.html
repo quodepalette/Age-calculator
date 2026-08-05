@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JoErl Age Calculator — Down to the Day</title>
+<meta name="description" content="Find out exactly how old you are — down to the day, hour, and second. Get your zodiac sign, Akan day name, birthstone, generation, next-birthday countdown, and see which singers and actors share your birthday.">
+<meta name="keywords" content="age calculator, how old am I, exact age calculator, birthday countdown, zodiac sign calculator, Akan day name, celebrities born on my birthday">
+<meta name="author" content="JoErl">
+<meta name="robots" content="index, follow">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<meta name="theme-color" content="#0F1226">
+<link rel="canonical" href="https://age.quodepalette.com">
+
+<!-- Open Graph / social sharing -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="JoErl">
+<meta property="og:title" content="JoErl Age Calculator — Down to the Day">
+<meta property="og:description" content="Find out exactly how old you are — down to the day, hour, and second. Zodiac sign, Akan day name, birthstone, generation, birthday countdown, and celebrity birthday matches.">
+<meta property="og:url" content="https://age.quodepalette.com">
+<meta property="og:image" content="https://age.quodepalette.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<!-- Twitter card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="JoErl Age Calculator — Down to the Day">
+<meta name="twitter:description" content="Find out exactly how old you are — down to the day, hour, and second, plus zodiac, birthstone, and celebrity birthday matches.">
+<meta name="twitter:image" content="https://age.quodepalette.com/og-image.png">
+
+<!-- Favicon (inline SVG, no external asset needed) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F1226'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='34' font-weight='700' fill='%23E8B84B' text-anchor='middle'%3EJ%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,520;1,9..144,520;1,9..144,600&display=swap" rel="stylesheet">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "JoErl Age Calculator",
+  "url": "https://age.quodepalette.com",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "description": "Calculate your exact age down to the day, hour, and second. Includes zodiac sign, Akan day name, birthstone, generation, birthday countdown, and celebrity birthday matches.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="grain"></div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">DOWN TO THE DAY</span>
+    <h1>JoErl <em>Age</em><br>Calculator</h1>
+    <p class="sub">Two people born in the same year aren't the same age. Pick a birth date and get the exact breakdown — <b>years, months, and days</b> — calculated precisely, not rounded to a year.</p>
+  </header>
+
+  <section class="card">
+    <div class="field-row">
+      <div class="field">
+        <label for="day">Day</label>
+        <select id="day" aria-label="Birth day"></select>
+      </div>
+      <div class="field">
+        <label for="month">Month</label>
+        <select id="month" aria-label="Birth month"></select>
+      </div>
+      <div class="field">
+        <label for="year">Year</label>
+        <select id="year" aria-label="Birth year"></select>
+      </div>
+    </div>
+    <button id="calcBtn" class="calc-btn">Calculate my age</button>
+    <p id="errorMsg" class="error" hidden></p>
+  </section>
+
+  <section id="result" class="result" hidden role="region" aria-label="Age results" aria-live="polite">
+
+    <div class="odometer-row">
+      <div class="odo">
+        <span class="odo-num" id="numYears">0</span>
+        <span class="odo-label">Years</span>
+      </div>
+      <div class="odo">
+        <span class="odo-num" id="numMonths">0</span>
+        <span class="odo-label">Months</span>
+      </div>
+      <div class="odo">
+        <span class="odo-num" id="numDays">0</span>
+        <span class="odo-label">Days</span>
+      </div>
+    </div>
+
+    <p class="ticker">alive for <span id="liveSeconds">0</span> seconds and counting</p>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <span class="stat-value" id="statWeeks">–</span>
+        <span class="stat-label">total weeks lived</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="statDays">–</span>
+        <span class="stat-label">total days lived</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="statHours">–</span>
+        <span class="stat-label">total hours lived</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="statWeekday">–</span>
+        <span class="stat-label">day of the week born</span>
+      </div>
+    </div>
+
+    <div class="birthday-card">
+      <div class="ring-wrap">
+        <svg width="78" height="78" viewBox="0 0 78 78">
+          <circle class="ring-bg" cx="39" cy="39" r="33" fill="none" stroke-width="7"></circle>
+          <circle class="ring-fg" id="ringFg" cx="39" cy="39" r="33" fill="none" stroke-width="7"
+            stroke-dasharray="207.3" stroke-dashoffset="207.3"></circle>
+        </svg>
+        <span class="ring-pct" id="ringPct">0%</span>
+      </div>
+      <div class="birthday-text">
+        <span id="birthdayHeadline">Next birthday</span>
+        <span id="birthdayDays">–</span>
+      </div>
+    </div>
+
+    <div class="section-label">Birth Profile</div>
+    <div class="profile-grid">
+      <div class="profile-card">
+        <span class="profile-icon" id="zodiacIcon">♈</span>
+        <span class="profile-value" id="zodiacName">–</span>
+        <span class="profile-label">Zodiac sign</span>
+      </div>
+
+      <div class="profile-card">
+        <div class="akan-toggle" role="group" aria-label="Select gender for Akan day name">
+          <button type="button" class="akan-btn active" data-gender="male" aria-pressed="true">Male</button>
+          <button type="button" class="akan-btn" data-gender="female" aria-pressed="false">Female</button>
+        </div>
+        <span class="profile-value" id="akanName">–</span>
+        <span class="profile-label">Akan day name</span>
+      </div>
+
+      <div class="profile-card">
+        <span class="profile-icon">💎</span>
+        <span class="profile-value" id="birthstoneName">–</span>
+        <span class="profile-label">Birthstone</span>
+      </div>
+
+      <div class="profile-card">
+        <span class="profile-icon">🕰️</span>
+        <span class="profile-value" id="generationName">–</span>
+        <span class="profile-label">Generation</span>
+      </div>
+    </div>
+    <p class="profile-note">In Akan tradition (Ghana), every person carries a name based on the day of the week they were born.</p>
+
+    <div class="section-label">Singers &amp; Actors Born On This Day</div>
+    <div id="celebLoading" class="celeb-status">Loading famous birthdays…</div>
+    <div id="celebError" class="celeb-status error" hidden></div>
+    <div id="celebGrid" class="celeb-grid"></div>
+    <button id="celebMoreBtn" class="celeb-more-btn" type="button" hidden>Show more</button>
+    <p class="celeb-source">Live data from <a href="https://en.wikipedia.org/wiki/Wikipedia:On_this_day" target="_blank" rel="noopener noreferrer">Wikipedia's "On this day"</a> feed, filtered to singers and actors — matched by month and day, any birth year.</p>
+
+  </section>
+
+  </div>
+  <!-- .wrap closed above intentionally left for structure; footer sits outside as full-width -->
+
+<footer class="site-footer">
+  <div class="footer-brand">JoErl</div>
+  <div class="footer-line">Made by JoErl. © <span id="footerYear"></span> All rights reserved.</div>
+</footer>
+
+<button id="backToTop" class="back-to-top" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"></line>
+    <polyline points="6 11 12 5 18 11"></polyline>
+  </svg>
+</button>
+
+<script src="scripts/scripts.js" defer></script>
+
+</body>
+</html>
