@@ -348,6 +348,426 @@
 
   document.getElementById('celebMoreBtn').addEventListener('click', renderMoreCelebs);
 
+  // ---------- Info icon tooltips (tap-to-open on touch devices) ----------
+  document.querySelectorAll('.info-icon').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const wasOpen = btn.classList.contains('open');
+      document.querySelectorAll('.info-icon.open').forEach(function(b){ b.classList.remove('open'); });
+      if (!wasOpen) btn.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(){
+    document.querySelectorAll('.info-icon.open').forEach(function(b){ b.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.info-icon.open').forEach(function(b){ b.classList.remove('open'); });
+    }
+  });
+
+  // ---------- Age difference + zodiac compatibility ----------
+  const ELEMENTS = {
+    Aries:'Fire', Leo:'Fire', Sagittarius:'Fire',
+    Taurus:'Earth', Virgo:'Earth', Capricorn:'Earth',
+    Gemini:'Air', Libra:'Air', Aquarius:'Air',
+    Cancer:'Water', Scorpio:'Water', Pisces:'Water'
+  };
+
+  function getCompatibility(signA, signB){
+    if (signA === signB) {
+      return { percent: 92, text: "Same sign — you two read each other like an open book, for better or worse." };
+    }
+    const elA = ELEMENTS[signA];
+    const elB = ELEMENTS[signB];
+    if (elA === elB) {
+      return { percent: 88, text: "Same element (" + elA + ") — an easy, natural rhythm together." };
+    }
+    const harmonious = (elA === 'Fire' && elB === 'Air') || (elA === 'Air' && elB === 'Fire') ||
+                        (elA === 'Earth' && elB === 'Water') || (elA === 'Water' && elB === 'Earth');
+    if (harmonious) {
+      return { percent: 78, text: elA + " and " + elB + " — you bring out each other's best qualities." };
+    }
+    const grounding = (elA === 'Earth' && elB === 'Fire') || (elA === 'Fire' && elB === 'Earth') ||
+                       (elA === 'Water' && elB === 'Air') || (elA === 'Air' && elB === 'Water');
+    if (grounding) {
+      return { percent: 60, text: elA + " and " + elB + " — different paces, but you can balance each other out." };
+    }
+    return { percent: 45, text: elA + " and " + elB + " — an opposites dynamic. Takes real effort to sync up." };
+  }
+
+  const diffNameA = document.getElementById('diffNameA');
+  const diffNameB = document.getElementById('diffNameB');
+  const diffDateA = document.getElementById('diffDateA');
+  const diffDateB = document.getElementById('diffDateB');
+  const diffBtn = document.getElementById('diffBtn');
+  const diffErrorEl = document.getElementById('diffError');
+  const diffResultEl = document.getElementById('diffResult');
+
+  diffBtn.addEventListener('click', function(){
+    diffErrorEl.hidden = true;
+
+    if (!diffDateA.value || !diffDateB.value) {
+      diffErrorEl.textContent = "Pick both birthdays to compare.";
+      diffErrorEl.hidden = false;
+      diffResultEl.hidden = true;
+      return;
+    }
+
+    const nameA = diffNameA.value.trim() || "Person A";
+    const nameB = diffNameB.value.trim() || "Person B";
+
+    const partsA = diffDateA.value.split('-').map(Number);
+    const partsB = diffDateB.value.split('-').map(Number);
+    const birthA = new Date(partsA[0], partsA[1] - 1, partsA[2]);
+    const birthB = new Date(partsB[0], partsB[1] - 1, partsB[2]);
+    const now = new Date();
+
+    if (stripTime(birthA) > stripTime(now) || stripTime(birthB) > stripTime(now)) {
+      diffErrorEl.textContent = "Both dates need to be in the past.";
+      diffErrorEl.hidden = false;
+      diffResultEl.hidden = true;
+      return;
+    }
+
+    const older = birthA <= birthB ? birthA : birthB;
+    const younger = birthA <= birthB ? birthB : birthA;
+    const gap = calculateAge(older, younger);
+
+    animateNumber(document.getElementById('diffYears'), gap.years, 700);
+    animateNumber(document.getElementById('diffMonths'), gap.months, 700);
+    animateNumber(document.getElementById('diffDays'), gap.days, 700);
+
+    document.getElementById('diffPairNames').innerHTML = nameA + " <span>&amp;</span> " + nameB;
+
+    const olderName = birthA <= birthB ? nameA : nameB;
+    const whoOlder = olderName + " is older";
+    document.getElementById('diffWhoOlder').textContent = whoOlder + (gap.years === 0 && gap.months === 0 && gap.days === 0 ? " — actually, same day!" : "");
+
+    const zodiacA = getZodiac(partsA[1], partsA[2]);
+    const zodiacB = getZodiac(partsB[1], partsB[2]);
+    document.getElementById('diffSignAIcon').textContent = zodiacA.symbol;
+    document.getElementById('diffSignAName').textContent = zodiacA.name;
+    document.getElementById('diffSignALabel').textContent = nameA + "'s sign";
+    document.getElementById('diffSignBIcon').textContent = zodiacB.symbol;
+    document.getElementById('diffSignBName').textContent = zodiacB.name;
+    document.getElementById('diffSignBLabel').textContent = nameB + "'s sign";
+
+    const compat = getCompatibility(zodiacA.name, zodiacB.name);
+    const circumference = 207.3;
+    const offset = circumference - (compat.percent / 100) * circumference;
+    document.getElementById('compatRingFg').style.strokeDashoffset = offset;
+    document.getElementById('compatPct').textContent = compat.percent + "%";
+    document.getElementById('compatLabel').textContent = nameA + " + " + nameB;
+    document.getElementById('compatDesc').textContent = compat.text;
+
+    diffResultEl.hidden = false;
+    diffResultEl.style.animation = 'none';
+    void diffResultEl.offsetWidth;
+    diffResultEl.style.animation = '';
+  });
+
+  // ---------- Family ages tracker ----------
+  const FAMILY_KEY = 'joerl_family_members';
+  const familyNameInput = document.getElementById('familyName');
+  const familyDateInput = document.getElementById('familyDate');
+  const familyAddBtn = document.getElementById('familyAddBtn');
+  const familyErrorEl = document.getElementById('familyError');
+  const familyListEl = document.getElementById('familyList');
+  const familyEmptyEl = document.getElementById('familyEmpty');
+  const familyExportRow = document.getElementById('familyExportRow');
+  const familyExportCsvBtn = document.getElementById('familyExportCsvBtn');
+  const familyExportPdfBtn = document.getElementById('familyExportPdfBtn');
+
+  function loadFamily(){
+    try {
+      const raw = localStorage.getItem(FAMILY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveFamily(list){
+    try { localStorage.setItem(FAMILY_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function formatFamilyAge(dob){
+    const parts = dob.split('-').map(Number);
+    const birth = new Date(parts[0], parts[1] - 1, parts[2]);
+    const now = new Date();
+    const age = calculateAge(birth, now);
+    const bits = [];
+    bits.push(age.years + (age.years === 1 ? " yr" : " yrs"));
+    bits.push(age.months + (age.months === 1 ? " mo" : " mos"));
+    bits.push(age.days + (age.days === 1 ? " day" : " days"));
+    return bits.join(', ');
+  }
+
+  function formatNextBirthday(birth){
+    const bday = nextBirthdayInfo(birth, new Date());
+    if (bday.daysUntil === 0) return "Birthday is today! \uD83C\uDF89";
+    return "Next birthday in <b>" + bday.daysUntil + (bday.daysUntil === 1 ? " day" : " days") + "</b>";
+  }
+
+  function renderFamily(){
+    const list = loadFamily();
+    familyListEl.innerHTML = '';
+
+    if (!list.length) {
+      familyEmptyEl.hidden = false;
+      familyExportRow.hidden = true;
+      return;
+    }
+    familyEmptyEl.hidden = true;
+    familyExportRow.hidden = false;
+
+    const sorted = list.slice().sort(function(a, b){
+      return new Date(a.dob) - new Date(b.dob);
+    });
+
+    sorted.forEach(function(member){
+      const parts = member.dob.split('-').map(Number);
+      const birth = new Date(parts[0], parts[1] - 1, parts[2]);
+      const gender = member.gender === 'female' ? 'female' : 'male';
+
+      const item = document.createElement('div');
+      item.className = 'family-item';
+
+      const top = document.createElement('div');
+      top.className = 'family-item-top';
+
+      const main = document.createElement('div');
+      main.className = 'family-item-main';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'family-name';
+      nameEl.textContent = member.name;
+
+      const ageEl = document.createElement('span');
+      ageEl.className = 'family-age';
+      ageEl.textContent = formatFamilyAge(member.dob);
+
+      main.appendChild(nameEl);
+      main.appendChild(ageEl);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'family-remove';
+      removeBtn.type = 'button';
+      removeBtn.setAttribute('aria-label', 'Remove ' + member.name);
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', function(){
+        const updated = loadFamily().filter(function(m){ return m.id !== member.id; });
+        saveFamily(updated);
+        renderFamily();
+      });
+
+      top.appendChild(main);
+      top.appendChild(removeBtn);
+
+      // ---- Badges: zodiac, Akan day name, birthstone, generation ----
+      const badges = document.createElement('div');
+      badges.className = 'family-badges';
+
+      const zodiac = getZodiac(parts[1], parts[2]);
+      const zodiacBadge = document.createElement('div');
+      zodiacBadge.className = 'family-badge';
+      zodiacBadge.innerHTML =
+        '<span class="family-badge-icon">' + zodiac.symbol + '</span>' +
+        '<span class="family-badge-value">' + zodiac.name + '</span>' +
+        '<span class="family-badge-label">Zodiac</span>';
+      badges.appendChild(zodiacBadge);
+
+      const akanDayIndex = birth.getDay();
+      const akanBadge = document.createElement('div');
+      akanBadge.className = 'family-badge family-badge-akan';
+      const akanValueEl = document.createElement('span');
+      akanValueEl.className = 'family-badge-value';
+      akanValueEl.textContent = AKAN_DAYS[akanDayIndex][gender];
+      const akanLabelEl = document.createElement('span');
+      akanLabelEl.className = 'family-badge-label';
+      akanLabelEl.textContent = 'Akan name';
+      const akanToggle = document.createElement('div');
+      akanToggle.className = 'family-akan-toggle';
+      ['male', 'female'].forEach(function(g){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'family-akan-btn' + (gender === g ? ' active' : '');
+        btn.textContent = g === 'male' ? 'M' : 'F';
+        btn.setAttribute('aria-label', (g === 'male' ? 'Male' : 'Female') + ' Akan name for ' + member.name);
+        btn.setAttribute('aria-pressed', gender === g ? 'true' : 'false');
+        btn.addEventListener('click', function(){
+          const updated = loadFamily().map(function(m){
+            if (m.id === member.id) m.gender = g;
+            return m;
+          });
+          saveFamily(updated);
+          renderFamily();
+        });
+        akanToggle.appendChild(btn);
+      });
+      akanBadge.appendChild(akanValueEl);
+      akanBadge.appendChild(akanLabelEl);
+      akanBadge.appendChild(akanToggle);
+      badges.appendChild(akanBadge);
+
+      const birthstoneBadge = document.createElement('div');
+      birthstoneBadge.className = 'family-badge';
+      birthstoneBadge.innerHTML =
+        '<span class="family-badge-icon">\uD83D\uDC8E</span>' +
+        '<span class="family-badge-value">' + BIRTHSTONES[parts[1] - 1] + '</span>' +
+        '<span class="family-badge-label">Birthstone</span>';
+      badges.appendChild(birthstoneBadge);
+
+      const generationBadge = document.createElement('div');
+      generationBadge.className = 'family-badge';
+      generationBadge.innerHTML =
+        '<span class="family-badge-icon">\uD83D\uDD70\uFE0F</span>' +
+        '<span class="family-badge-value">' + getGeneration(parts[0]) + '</span>' +
+        '<span class="family-badge-label">Generation</span>';
+      badges.appendChild(generationBadge);
+
+      const nextBday = document.createElement('p');
+      nextBday.className = 'family-next-birthday';
+      nextBday.innerHTML = formatNextBirthday(birth);
+
+      item.appendChild(top);
+      item.appendChild(badges);
+      item.appendChild(nextBday);
+      familyListEl.appendChild(item);
+    });
+  }
+
+  // ---- Export: shared row-building for CSV + PDF ----
+  function formatDob(dob){
+    const parts = dob.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function formatNextBirthdayPlain(birth){
+    const bday = nextBirthdayInfo(birth, new Date());
+    if (bday.daysUntil === 0) return "Today!";
+    return "In " + bday.daysUntil + (bday.daysUntil === 1 ? " day" : " days");
+  }
+
+  function getFamilyExportRows(){
+    const list = loadFamily().slice().sort(function(a, b){
+      return new Date(a.dob) - new Date(b.dob);
+    });
+    return list.map(function(member){
+      const parts = member.dob.split('-').map(Number);
+      const birth = new Date(parts[0], parts[1] - 1, parts[2]);
+      const gender = member.gender === 'female' ? 'female' : 'male';
+      const zodiac = getZodiac(parts[1], parts[2]);
+      return {
+        name: member.name,
+        birthday: formatDob(member.dob),
+        age: formatFamilyAge(member.dob),
+        zodiac: zodiac.name,
+        akanName: AKAN_DAYS[birth.getDay()][gender],
+        birthstone: BIRTHSTONES[parts[1] - 1],
+        generation: getGeneration(parts[0]),
+        nextBirthday: formatNextBirthdayPlain(birth)
+      };
+    });
+  }
+
+  function csvEscape(value){
+    const str = String(value);
+    if (/[",\n]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
+    return str;
+  }
+
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  familyExportCsvBtn.addEventListener('click', function(){
+    const rows = getFamilyExportRows();
+    if (!rows.length) return;
+    const headers = ['Name', 'Birthday', 'Age', 'Zodiac', 'Akan Day Name', 'Birthstone', 'Generation', 'Next Birthday'];
+    const lines = [headers.join(',')];
+    rows.forEach(function(r){
+      lines.push([r.name, r.birthday, r.age, r.zodiac, r.akanName, r.birthstone, r.generation, r.nextBirthday]
+        .map(csvEscape).join(','));
+    });
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    downloadBlob(blob, 'family-ages.csv');
+  });
+
+  familyExportPdfBtn.addEventListener('click', function(){
+    const rows = getFamilyExportRows();
+    if (!rows.length) return;
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      familyErrorEl.textContent = "PDF export is still loading — give it a second and try again.";
+      familyErrorEl.hidden = false;
+      return;
+    }
+    familyErrorEl.hidden = true;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Family Ages Tracker', 40, 40);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text('Exported ' + new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }), 40, 58);
+
+    doc.autoTable({
+      startY: 72,
+      head: [['Name', 'Birthday', 'Age', 'Zodiac', 'Akan Day Name', 'Birthstone', 'Generation', 'Next Birthday']],
+      body: rows.map(function(r){
+        return [r.name, r.birthday, r.age, r.zodiac, r.akanName, r.birthstone, r.generation, r.nextBirthday];
+      }),
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [232, 184, 75], textColor: [26, 19, 0] },
+      alternateRowStyles: { fillColor: [247, 247, 250] }
+    });
+
+    doc.save('family-ages.pdf');
+  });
+
+  familyAddBtn.addEventListener('click', function(){
+    familyErrorEl.hidden = true;
+    const name = familyNameInput.value.trim();
+    const dob = familyDateInput.value;
+
+    if (!name || !dob) {
+      familyErrorEl.textContent = "Enter a name and birthday.";
+      familyErrorEl.hidden = false;
+      return;
+    }
+    const parts = dob.split('-').map(Number);
+    const birth = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (stripTime(birth) > stripTime(new Date())) {
+      familyErrorEl.textContent = "That birthday hasn't happened yet.";
+      familyErrorEl.hidden = false;
+      return;
+    }
+
+    const list = loadFamily();
+    list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name: name, dob: dob, gender: 'male' });
+    saveFamily(list);
+
+    familyNameInput.value = '';
+    familyDateInput.value = '';
+    renderFamily();
+  });
+
+  renderFamily();
+
   calcBtn.addEventListener('click', function(){
     const day = parseInt(daySelect.value, 10);
     const month = parseInt(monthSelect.value, 10) - 1;
