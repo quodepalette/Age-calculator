@@ -179,6 +179,23 @@
     border-color:var(--gold);
     box-shadow:0 0 0 3px var(--gold-soft);
   }
+  .field select option{ background:var(--panel-2); color:var(--text); }
+
+  /* ---------- Native form control theming ---------- */
+  input, select, button{ -webkit-tap-highlight-color:transparent; }
+
+  /* Stop mobile browsers from painting autofilled fields with their own
+     light background/text color instead of the site theme. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active{
+    -webkit-text-fill-color:var(--text) !important;
+    -webkit-box-shadow:0 0 0px 1000px var(--bg-2) inset !important;
+    box-shadow:0 0 0px 1000px var(--bg-2) inset !important;
+    caret-color:var(--gold);
+    transition:background-color 9999s ease-in-out 0s;
+  }
 
   .calc-btn{
     width:100%;
@@ -353,6 +370,9 @@
     padding:12px 12px;
     border-radius:12px;
     color-scheme:dark;
+    caret-color:var(--gold);
+    appearance:none;
+    -webkit-appearance:none;
     transition:border-color 0.2s ease, box-shadow 0.2s ease;
   }
   .date-input:hover{ border-color:rgba(232,184,75,0.35); }
@@ -360,6 +380,18 @@
     outline:none;
     border-color:var(--gold);
     box-shadow:0 0 0 3px var(--gold-soft);
+  }
+  .date-input::-webkit-calendar-picker-indicator{
+    filter:invert(75%) sepia(46%) saturate(486%) hue-rotate(358deg) brightness(101%) contrast(96%);
+    opacity:0.85;
+    cursor:pointer;
+    padding:3px;
+    border-radius:6px;
+    transition:opacity 0.2s ease, background 0.2s ease;
+  }
+  .date-input::-webkit-calendar-picker-indicator:hover{
+    opacity:1;
+    background:var(--gold-soft);
   }
 
   .person-field{ display:flex; flex-direction:column; }
@@ -375,6 +407,9 @@
     font-weight:500;
     padding:12px 12px;
     border-radius:12px;
+    caret-color:var(--gold);
+    appearance:none;
+    -webkit-appearance:none;
     transition:border-color 0.2s ease, box-shadow 0.2s ease;
   }
   .text-input::placeholder{ color:var(--text-faint); }
@@ -410,6 +445,9 @@
     font-weight:500;
     padding:12px 12px;
     border-radius:12px;
+    caret-color:var(--gold);
+    appearance:none;
+    -webkit-appearance:none;
     transition:border-color 0.2s ease, box-shadow 0.2s ease;
   }
   .family-add-row input[type="text"]::placeholder{ color:var(--text-faint); }
@@ -599,6 +637,12 @@
     .two-col{ grid-template-columns:1fr; }
     .family-add-row{ grid-template-columns:1fr; }
     .add-btn{ padding:13px 20px; }
+    .field select,
+    .date-input,
+    .text-input,
+    .family-add-row input[type="text"]{
+      font-size:16px;
+    }
   }
 
   /* ---------- Scrollbar ---------- */
@@ -796,6 +840,30 @@
   }
   .info-icon .tooltip a{ color:var(--gold); text-decoration:none; }
   .info-icon .tooltip a:hover{ filter:brightness(1.12); }
+
+  /* On narrow screens the icon often sits right-of-center (after longer
+     labels), so a tooltip centered on the icon can spill past the right
+     edge. Anchor it to the icon's right edge instead and cap its width
+     to the viewport so it always stays inside the margins. */
+  @media (max-width:600px){
+    .info-icon .tooltip{
+      left:auto;
+      right:-6px;
+      transform:translateY(4px);
+      width:max-content;
+      max-width:min(260px, calc(100vw - 40px));
+    }
+    .info-icon .tooltip::after{
+      left:auto;
+      right:14px;
+      transform:none;
+    }
+    .info-icon:hover .tooltip,
+    .info-icon:focus-visible .tooltip,
+    .info-icon.open .tooltip{
+      transform:translateY(0);
+    }
+  }
   .profile-grid{
     display:grid;
     grid-template-columns:repeat(2, 1fr);
