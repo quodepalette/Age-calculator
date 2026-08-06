@@ -1,0 +1,11 @@
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/css/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/scripts/scripts.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/scripts/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
