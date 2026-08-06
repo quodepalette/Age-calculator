@@ -328,6 +328,15 @@
     text-align:center;
     letter-spacing:-0.01em;
   }
+  .card-sub{
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.6;
+    max-width:440px;
+    margin:-10px auto 24px;
+    text-align:center;
+  }
+  .card-sub b{ color:var(--text); font-weight:600; }
 
   .two-col{ grid-template-columns:1fr 1fr; }
 
